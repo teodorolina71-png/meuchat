@@ -2,7 +2,7 @@
 <html lang="pt"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MeuChat</title>
+<title>MeuChat</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#202c33">
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:sans-serif;background:#0b141a;color:#e9edef;height:100dvh;display:flex;flex-direction:column}
@@ -78,4 +78,4 @@ if (!t) return;
 addDoc(collection(db, "mensagens"), { texto: t, uid: auth.currentUser.uid, nome: auth.currentUser.email.split("@")[0], hora: serverTimestamp() });
 $("txt").value = "";
 };
-</script></body></html>
+</script><script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js")</script></body></html>
