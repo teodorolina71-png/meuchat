@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MeuChat</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:sans-serif;background:#0b141a;color:#e9edef;height:100dvh;display:flex;flex-direction:column}
+#login{margin:auto;padding:20px;width:90%;max-width:360px;display:flex;flex-direction:column;gap:10px}
+input,button{padding:12px;border-radius:8px;border:0;font-size:16px}
+button{background:#00a884;color:#fff}
+#chat{display:none;flex-direction:column;height:100%}
+header{background:#202c33;padding:14px;display:flex;justify-content:space-between;align-items:center}
+header button{padding:6px 10px;background:#374248}
+#msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m{max-width:80%;padding:8px 10px;border-radius:8px;background:#202c33;word-wrap:break-word}
+.me{align-self:flex-end;background:#005c4b}
+.m small{display:block;color:#8696a0;font-size:11px}
+form{display:flex;gap:6px;padding:8px;background:#202c33}
+form input{flex:1}
+</style></head><body>
+<div id="login">
+<h2>MeuChat</h2>
+<input id="email" type="email" placeholder="E-mail">
+<input id="senha" type="password" placeholder="Senha (mín. 6)">
+<button id="entrar">Entrar</button>
+<button id="criar" style="background:#374248">Criar conta</button>
+<small id="erro" style="color:#f88"></small>
+</div>
+<div id="chat">
+<header><b>Chat geral</b><button id="sair">Sair</button></header>
+<div id="msgs"></div>
+<form id="f"><input id="txt" placeholder="Mensagem" autocomplete="off"><button>Enviar</button></form>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+const app = initializeApp({
+apiKey: "AIzaSyBn2A-cjGs3VSZT4CFSzdC5o22SkWfKM8Q",
+authDomain: "meuchat-f5201.firebaseapp.com",
+projectId: "meuchat-f5201",
+storageBucket: "meuchat-f5201.firebasestorage.app",
+messagingSenderId: "772001942745",
+appId: "1:772001942745:web:2d405e8f8de0cd221882c8"
+});
+const auth = getAuth(app), db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const cred = () => [auth, $("email").value, $("senha").value];
+const falha = e => $("erro").textContent = e.code;
+$("entrar").onclick = () => signInWithEmailAndPassword(...cred()).catch(falha);
+$("criar").onclick = () => createUserWithEmailAndPassword(...cred()).catch(falha);
+$("sair").onclick = () => signOut(auth);
+let parar;
+onAuthStateChanged(auth, user => {
+$("login").style.display = user ? "none" : "flex";
+$("chat").style.display = user ? "flex" : "none";
+if (parar) parar();
+if (!user) return;
+const q = query(collection(db, "mensagens"), orderBy("hora"), limit(100));
+parar = onSnapshot(q, snap => {
+$("msgs").innerHTML = "";
+snap.forEach(d => {
+const m = d.data(), div = document.createElement("div");
+div.className = "m" + (m.uid === user.uid ? " me" : "");
+const nome = document.createElement("small");
+nome.textContent = m.nome;
+div.append(nome, document.createTextNode(m.texto));
+$("msgs").append(div);
+});
+$("msgs").scrollTop = $("msgs").scrollHeight;
+});
+});
+$("f").onsubmit = e => {
+e.preventDefault();
+const t = $("txt").value.trim();
+if (!t) return;
+addDoc(collection(db, "mensagens"), { texto: t, uid: auth.currentUser.uid, nome: auth.currentUser.email.split("@")[0], hora: serverTimestamp() });
+$("txt").value = "";
+};
+</script></body></html>
